@@ -1,0 +1,84 @@
+<div id="Napisy24ConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-controller="__plugin/napisy24js">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="Napisy24ConfigForm">
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="baseUrl">Base URL</label>
+                    <input is="emby-input" type="text" id="baseUrl" />
+                    <div class="fieldDescription">Defaults to https://napisy24.pl. Change only if the site moves.</div>
+                </div>
+
+                <h3 class="sectionTitle sectionTitle-cards">Hash lookup (CheckSubAgent)</h3>
+                <div class="fieldDescription">
+                    Hash lookup returns the subtitle matched to the exact release and requires the
+                    application credentials below. The default pair belongs to the public
+                    Subliminal/Bazarr provider; for a long-lived installation ask napisy24 for
+                    your own pair.
+                </div>
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="enableHashLookup" />
+                        <span>Enable hash lookup</span>
+                    </label>
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="agentUsername">Agent user (ua)</label>
+                    <input is="emby-input" type="text" id="agentUsername" />
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="agentPassword">Agent password (ap)</label>
+                    <input is="emby-input" type="password" id="agentPassword" />
+                </div>
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="useMd5Fallback" />
+                        <span>Send napiprojekt MD5 as a fallback (slower, reads 10 MiB)</span>
+                    </label>
+                </div>
+
+                <h3 class="sectionTitle sectionTitle-cards">Metadata search (webapi)</h3>
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="enableMetadataSearch" />
+                        <span>Enable metadata search</span>
+                    </label>
+                </div>
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="enableAutomaticMetadataSearch" />
+                        <span>Allow metadata search during automated downloads</span>
+                    </label>
+                </div>
+                <div class="fieldDescription">
+                    Automated tasks use hash lookup only by default. Enabling this makes Jellyfin
+                    query napisy24 for every new item; keep it off if you care about the site's
+                    bandwidth and terms of service.
+                </div>
+
+                <h3 class="sectionTitle sectionTitle-cards">Behaviour</h3>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="maxResults">Maximum results</label>
+                    <input is="emby-input" type="number" id="maxResults" min="1" max="50" />
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="requestDelayMs">Delay between requests (ms)</label>
+                    <input is="emby-input" type="number" id="requestDelayMs" min="0" max="5000" />
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="autoScoreThreshold">Automated score threshold</label>
+                    <input is="emby-input" type="number" id="autoScoreThreshold" min="0" max="95" />
+                </div>
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="mergeMultiCd" />
+                        <span>Merge multi-CD subtitles into one SRT</span>
+                    </label>
+                </div>
+
+                <button is="emby-button" type="submit" class="raised button-submit block">
+                    <span>${Save}</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/Jellyfin.Plugin.Napisy24.Tests/Jellyfin.Plugin.Napisy24.Tests.csproj" />
+  </Folder>
+  <Project Path="Jellyfin.Plugin.Napisy24/Jellyfin.Plugin.Napisy24.csproj" />
+</Solution>

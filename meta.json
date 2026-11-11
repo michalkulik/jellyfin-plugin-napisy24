@@ -1,0 +1,16 @@
+{
+  "category": "Subtitles",
+  "changelog": "Initial version: hash + metadata search",
+  "description": "Polish subtitles from napisy24.pl (hash + metadata search)",
+  "guid": "1e3057d0-c2e0-4bbc-a67b-5fa31cdbebd9",
+  "name": "Napisy24",
+  "overview": "Polish subtitles from napisy24.pl",
+  "owner": "michalkulik",
+  "targetAbi": "12.0.0.0",
+  "timestamp": "2026-11-11T00:00:00.0000000Z",
+  "version": "1.0.0.0",
+  "status": "Active",
+  "autoUpdate": true,
+  "imagePath": "",
+  "assemblies": []
+}
