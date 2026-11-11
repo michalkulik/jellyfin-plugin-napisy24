@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.Napisy24.Activation;
 using Jellyfin.Plugin.Napisy24.Configuration;
 using Jellyfin.Plugin.Napisy24.Napisy24;
 using MediaBrowser.Controller.Providers;
@@ -31,6 +32,7 @@ public class Napisy24Provider : ISubtitleProvider, IHasOrder
     private static readonly ConcurrentDictionary<string, CacheEntry> HashCache = new(StringComparer.Ordinal);
     private readonly ILogger<Napisy24Provider> _logger;
     private readonly ILocalizationManager _localizationManager;
+    private readonly ActivationService _activation;
     private readonly Napisy24Client _client;
 
     /// <summary>
@@ -39,10 +41,12 @@ public class Napisy24Provider : ISubtitleProvider, IHasOrder
     public Napisy24Provider(
         ILogger<Napisy24Provider> logger,
         IHttpClientFactory httpClientFactory,
-        ILocalizationManager localizationManager)
+        ILocalizationManager localizationManager,
+        ActivationService activation)
     {
         _logger = logger;
         _localizationManager = localizationManager;
+        _activation = activation;
         _client = new Napisy24Client(httpClientFactory, logger);
     }
 
@@ -59,6 +63,12 @@ public class Napisy24Provider : ISubtitleProvider, IHasOrder
     public async Task<IEnumerable<RemoteSubtitleInfo>> Search(SubtitleSearchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (!_activation.GetStatus().IsActivated)
+        {
+            _logger.LogDebug("Napisy24 is not activated; ignoring the search request");
+            return Array.Empty<RemoteSubtitleInfo>();
+        }
 
         var language = ResolveLanguage(request);
         if (language is null)
@@ -152,6 +162,12 @@ public class Napisy24Provider : ISubtitleProvider, IHasOrder
         if (string.IsNullOrWhiteSpace(id))
         {
             throw new ArgumentException("Subtitle id is empty.", nameof(id));
+        }
+
+        if (!_activation.GetStatus().IsActivated)
+        {
+            throw new InvalidOperationException(
+                "Napisy24 is not activated. Enter an activation code in Dashboard -> Plugins -> Napisy24.");
         }
 
         var config = GetConfiguration();

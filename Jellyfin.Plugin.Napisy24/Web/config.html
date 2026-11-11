@@ -2,6 +2,26 @@
     <div data-role="content">
         <div class="content-primary">
             <form id="Napisy24ConfigForm">
+                <h3 class="sectionTitle sectionTitle-cards">Activation</h3>
+                <div class="fieldDescription">
+                    This repository is public, but the plugin does nothing until a valid activation
+                    code is entered. Codes are signed with a private key that is not part of the
+                    repository. Send the server id below to the plugin owner to receive a code.
+                </div>
+                <div class="inputContainer">
+                    <div>Status: <strong id="activationStatus">checking…</strong></div>
+                    <div>Server id: <code id="serverId">…</code></div>
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="activationCode">Activation code</label>
+                    <textarea is="emby-textarea" id="activationCode" rows="3"></textarea>
+                </div>
+                <div>
+                    <button is="emby-button" type="button" id="activateButton" class="raised button-submit">Activate</button>
+                    <button is="emby-button" type="button" id="deactivateButton" class="raised button-cancel">Deactivate</button>
+                </div>
+                <div class="fieldDescription" id="activationMessage"></div>
+
                 <div class="inputContainer">
                     <label class="inputLabel inputLabelUnfocused" for="baseUrl">Base URL</label>
                     <input is="emby-input" type="text" id="baseUrl" />

@@ -13,13 +13,23 @@ internal static class Base64Url
 {
     public static string Encode(string value)
     {
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(value))
+        return EncodeBytes(Encoding.UTF8.GetBytes(value));
+    }
+
+    public static string EncodeBytes(ReadOnlySpan<byte> value)
+    {
+        return Convert.ToBase64String(value)
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
     }
 
     public static string Decode(string value)
+    {
+        return Encoding.UTF8.GetString(DecodeBytes(value));
+    }
+
+    public static byte[] DecodeBytes(string value)
     {
         var padded = value.Replace('-', '+').Replace('_', '/');
         switch (padded.Length % 4)
@@ -32,7 +42,7 @@ internal static class Base64Url
                 break;
         }
 
-        return Encoding.UTF8.GetString(Convert.FromBase64String(padded));
+        return Convert.FromBase64String(padded);
     }
 }
 

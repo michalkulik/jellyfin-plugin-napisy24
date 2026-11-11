@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using Jellyfin.Plugin.Napisy24.Activation;
 using Jellyfin.Plugin.Napisy24.Napisy24;
 using Xunit;
 
@@ -288,5 +291,93 @@ public class Napisy24ParsingTests
 
         Assert.True(result.LoginError);
         Assert.False(result.Success);
+    }
+}
+
+public class ActivationCodeTests
+{
+    private static string CreateCode(ECDsa key, string serverId, long expires = 0, string name = "test")
+    {
+        var payload = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            sid = serverId,
+            name,
+            exp = expires,
+        });
+
+        var signature = key.SignData(
+            payload,
+            HashAlgorithmName.SHA256,
+            DSASignatureFormat.Rfc3279DerSequence);
+
+        return "N24v1." + Base64Url.EncodeBytes(payload) + "." + Base64Url.EncodeBytes(signature);
+    }
+
+    [Fact]
+    public void ValidCode_IsAccepted()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+        var code = CreateCode(key, "server-1");
+
+        Assert.True(ActivationCode.TryVerify(code, "server-1", publicKey, out var info, out var error), error);
+        Assert.NotNull(info);
+        Assert.Equal("server-1", info!.ServerId);
+        Assert.Equal("test", info.Name);
+    }
+
+    [Fact]
+    public void CodeForAnotherServer_IsRejected()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+        var code = CreateCode(key, "server-1");
+
+        Assert.False(ActivationCode.TryVerify(code, "server-2", publicKey, out _, out var error));
+        Assert.Contains("different server", error);
+    }
+
+    [Fact]
+    public void SharedCode_IsAcceptedOnAnyServer()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+        var code = CreateCode(key, "*");
+
+        Assert.True(ActivationCode.TryVerify(code, "server-1", publicKey, out _, out _));
+        Assert.True(ActivationCode.TryVerify(code, "server-2", publicKey, out _, out _));
+    }
+
+    [Fact]
+    public void ExpiredCode_IsRejected()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+        var code = CreateCode(key, "server-1", DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds());
+
+        Assert.False(ActivationCode.TryVerify(code, "server-1", publicKey, out _, out var error));
+        Assert.Contains("expired", error);
+    }
+
+    [Fact]
+    public void TamperedCode_IsRejected()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+        var code = CreateCode(key, "server-1");
+        var parts = code.Split('.');
+        var payload = Base64Url.Decode(parts[1]).Replace("server-1", "server-2");
+
+        var tampered = parts[0] + "." + Base64Url.Encode(payload) + "." + parts[2];
+
+        Assert.False(ActivationCode.TryVerify(tampered, "server-1", publicKey, out _, out var error));
+        Assert.Contains("signature", error);
+    }
+
+    [Fact]
+    public void GarbageCode_IsRejected()
+    {
+        Assert.False(ActivationCode.TryVerify("not-a-code", "server-1", ActivationService.PublicKeyBase64, out _, out _));
+        Assert.False(ActivationCode.TryVerify("N24v1.abc", "server-1", ActivationService.PublicKeyBase64, out _, out _));
     }
 }

@@ -1,4 +1,5 @@
 using System.Net.Http;
+using Jellyfin.Plugin.Napisy24.Activation;
 using Jellyfin.Plugin.Napisy24.Providers;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
@@ -24,6 +25,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
                 AllowAutoRedirect = false,
             });
 
+        serviceCollection.AddSingleton<ActivationService>();
         serviceCollection.AddSingleton<ISubtitleProvider, Napisy24Provider>();
     }
 }

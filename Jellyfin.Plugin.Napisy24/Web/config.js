@@ -14,9 +14,87 @@ function setChecked(view, id, value) {
     }
 }
 
+function renderStatus(view, status) {
+    const statusElement = view.querySelector('#activationStatus');
+    const serverElement = view.querySelector('#serverId');
+    const messageElement = view.querySelector('#activationMessage');
+
+    statusElement.innerText = status.IsActivated ? 'ACTIVE' : 'INACTIVE';
+    statusElement.style.color = status.IsActivated ? '#4caf50' : '#ff5252';
+    serverElement.innerText = status.ServerId || '';
+
+    if (status.IsActivated) {
+        let message = 'Activated';
+        if (status.Name) {
+            message += ' for ' + status.Name;
+        }
+        if (status.Expires) {
+            message += ', expires ' + status.Expires;
+        }
+        messageElement.innerText = message;
+        messageElement.style.color = '#4caf50';
+    } else {
+        messageElement.innerText = status.Error || '';
+        messageElement.style.color = '#ff5252';
+    }
+}
+
+function refreshStatus(view) {
+    return ApiClient.ajax({ type: 'GET', url: ApiClient.getUrl('Napisy24/Status') })
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (status) {
+            renderStatus(view, status);
+            return status;
+        })
+        .catch(function () {
+            view.querySelector('#activationStatus').innerText = 'UNKNOWN';
+            view.querySelector('#activationMessage').innerText = 'Could not read the activation status.';
+        });
+}
+
+function activate(view) {
+    const code = view.querySelector('#activationCode').value.trim();
+    if (!code) {
+        view.querySelector('#activationMessage').innerText = 'Enter an activation code first.';
+        return;
+    }
+
+    ApiClient.ajax({
+        type: 'POST',
+        url: ApiClient.getUrl('Napisy24/Activate'),
+        data: JSON.stringify({ Code: code }),
+        contentType: 'application/json'
+    }).then(function (response) {
+        return response.json().then(function (status) {
+            renderStatus(view, status);
+            if (response.ok && status.IsActivated) {
+                view.querySelector('#activationMessage').innerText = 'Activated.';
+            }
+        });
+    }).catch(function () {
+        view.querySelector('#activationMessage').innerText = 'Activation failed. Check the code and try again.';
+    });
+}
+
+function deactivate(view) {
+    ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('Napisy24/Deactivate') })
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (status) {
+            renderStatus(view, status);
+        })
+        .catch(function () {
+            view.querySelector('#activationMessage').innerText = 'Could not deactivate the plugin.';
+        });
+}
+
 export default function (view) {
     view.addEventListener('viewshow', function () {
         Dashboard.showLoadingMsg();
+
         ApiClient.getPluginConfiguration(pluginId).then(function (config) {
             setValue(view, 'baseUrl', config.BaseUrl || 'https://napisy24.pl');
             setChecked(view, 'enableHashLookup', config.EnableHashLookup);
@@ -29,8 +107,19 @@ export default function (view) {
             setValue(view, 'requestDelayMs', config.RequestDelayMs);
             setValue(view, 'autoScoreThreshold', config.AutoScoreThreshold);
             setChecked(view, 'mergeMultiCd', config.MergeMultiCd);
+            setValue(view, 'activationCode', config.ActivationCode || '');
             Dashboard.hideLoadingMsg();
         });
+
+        refreshStatus(view);
+    });
+
+    view.querySelector('#activateButton').addEventListener('click', function () {
+        activate(view);
+    });
+
+    view.querySelector('#deactivateButton').addEventListener('click', function () {
+        deactivate(view);
     });
 
     view.querySelector('#Napisy24ConfigForm').addEventListener('submit', function (event) {

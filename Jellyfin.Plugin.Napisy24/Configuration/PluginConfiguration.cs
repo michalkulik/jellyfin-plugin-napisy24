@@ -8,6 +8,12 @@ namespace Jellyfin.Plugin.Napisy24.Configuration;
 public class PluginConfiguration : BasePluginConfiguration
 {
     /// <summary>
+    /// Gets or sets the signed activation code. The plugin does nothing until
+    /// a valid code for this server is configured.
+    /// </summary>
+    public string ActivationCode { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the napisy24 base URL.
     /// </summary>
     public string BaseUrl { get; set; } = "https://napisy24.pl";

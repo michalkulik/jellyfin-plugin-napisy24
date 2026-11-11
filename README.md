@@ -17,8 +17,17 @@ Wtyczka do Jellyfina pobierająca polskie napisy z [napisy24.pl](https://napisy2
 
 ## Instalacja
 
-Repo jest prywatne, więc Jellyfin nie pobierze `manifest.json` bez
-uwierzytelnienia. Instaluj ręcznie:
+Repo jest publiczne, więc Jellyfin może korzystać z niego jak ze zwykłego
+repozytorium wtyczek:
+
+```
+https://raw.githubusercontent.com/michalkulik/jellyfin-plugin-napisy24/main/manifest.json
+```
+
+*Dashboard → Plugins → Repositories → +*, wklej URL, odśwież katalog i zainstaluj
+**Napisy24**.
+
+Ręcznie (np. przed pierwszym release):
 
 ```bash
 ./build.sh net10.0        # lub net9.0 dla 10.11
@@ -38,10 +47,43 @@ docker compose -p jellyfin restart jellyfin
 Po restarcie: *Dashboard → Plugins* powinno pokazać **Napisy24 1.0.0.0**
 (Status: Active). Konfiguracja: *Dashboard → Plugins → Napisy24 → Settings*.
 
+## Aktywacja
+
+**Bez ważnego kodu aktywacyjnego wtyczka nie zwraca żadnych wyników.**
+Kod jest podpisany kluczem prywatnym ECDSA P-256, którego **nie ma w repo**;
+publiczny klucz wystarcza tylko do weryfikacji, więc nikt nie wygeneruje sobie
+kodu z publicznego kodu źródłowego.
+
+1. Otwórz *Dashboard → Plugins → Napisy24 → Settings*.
+2. Skopiuj **Server id** (albo `GET /Napisy24/Status`).
+3. Wygeneruj kod:
+
+   ```bash
+   ./tools/make-activation-code.py --server-id <server-id> --name "jellykulik"
+   # kod współdzielony dla wielu serwerów (jak hasło):
+   ./tools/make-activation-code.py --any --name "friends" --days 365
+   ```
+
+   Skrypt czyta klucz prywatny z
+   `~/.local/share/signing/jellyfin-plugin-napisy24/activation-private.pem`
+   (poza repo). `--keygen` tworzy nową parę kluczy.
+4. Wklej kod w polu **Activation code** i kliknij **Activate**.
+
+Kod per-serwer działa tylko na tym Jellyfinie; kod `--any` działa wszędzie,
+więc traktuj go jak hasło. Dezaktywacja: **Deactivate** (albo wyczyszczenie
+pola przez API).
+
+> **Uczciwie:** to jest bramka „cywilna”, nie DRM. Kod jest sprawdzany
+> w pluginie, więc ktoś zdeterminowany może patchować DLL i ją pominąć.
+> Publiczny kod źródłowy nie pozwala jednak **wygenerować** ważnego kodu bez
+> klucza prywatnego. Nie ma też zdalnej rewokacji — przy wycieku kodu
+> współdzielonego trzeba wydać nową wersję/klucz.
+
 ## Konfiguracja
 
 | Pole | Domyślnie | Znaczenie |
 |---|---|---|
+| `ActivationCode` | puste | podpisany kod aktywacyjny (wymagany) |
 | `BaseUrl` | `https://napisy24.pl` | adres serwisu |
 | `EnableHashLookup` | `true` | dopasowanie po hashu OSH |
 | `AgentUsername` / `AgentPassword` | `subliminal` / `lanimilbus` | dane aplikacji do `CheckSubAgent` |
