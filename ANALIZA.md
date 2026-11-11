@@ -806,3 +806,31 @@ tlId:|tlPrc:|tlInfo:
 7. **Repo GitHub:** `michalkulik/jellyfin-plugin-napisy24` (publiczne/prywatne)?
 8. **Czy kontaktować się z napisy24 już teraz** (przed kodem), czy dopiero
    przed publikacją?
+
+---
+
+## 10. Aktywacja (wdrożona po analizie)
+
+Repo jest publiczne, ale wtyczka **nie zwraca wyników bez ważnego kodu
+aktywacyjnego**. Kod jest podpisany kluczem prywatnym **ECDSA P-256**; w repo
+i w DLL jest tylko klucz publiczny, więc nie da się z niego wygenerować nowego
+kodu.
+
+- Kod per-serwer: `tools/make-activation-code.py --server-id <id> --name ...`
+  (pole `sid` w podpisanym payloadzie),
+- kod współdzielony: `--any` (pole `sid = "*"`), działa jak hasło na wielu
+  serwerach,
+- opcjonalny termin ważności: `--days N`,
+- klucz prywatny:
+  `~/.local/share/signing/jellyfin-plugin-napisy24/activation-private.pem`
+  (poza repo, prawa 600).
+
+Panel w Jellyfinie pokazuje status, Server id, pole na kod oraz przyciski
+Activate/Deactivate; endpointy to `GET /Napisy24/Status`,
+`POST /Napisy24/Activate`, `POST /Napisy24/Deactivate`.
+
+**Ograniczenie:** to bramka „cywilna”, nie DRM. Kod jest sprawdzany w pluginie,
+więc zdeterminowany użytkownik może patchować DLL i pominąć weryfikację.
+Publiczny kod nie pozwala jednak **wygenerować** ważnego kodu bez klucza
+prywatnego. Nie ma zdalnej rewokacji — przy wycieku kodu współdzielonego
+trzeba wydać nową wersję/klucz.
